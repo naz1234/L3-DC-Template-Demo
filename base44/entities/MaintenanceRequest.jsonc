@@ -1,0 +1,34 @@
+{
+  "name": "MaintenanceRequest",
+  "type": "object",
+  "properties": {
+    "trainId": {
+      "type": "string",
+      "description": "Train ID number"
+    },
+    "requestType": {
+      "type": "string",
+      "description": "Manual maintenance request type entered by user"
+    },
+    "customType": {
+      "type": "string",
+      "description": "Legacy custom type text for older saved records"
+    },
+    "groupTitle": {
+      "type": "string",
+      "description": "Optional editable parent title used to group train requests without changing their request type"
+    },
+    "groupHidden": {
+      "type": "boolean",
+      "description": "Shared visibility state for hiding or unhiding the train rows in a request group"
+    },
+    "remark": {
+      "type": "string",
+      "description": "Optional remark"
+    }
+  },
+  "required": [
+    "trainId",
+    "requestType"
+  ]
+}

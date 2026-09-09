@@ -1,0 +1,31 @@
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import path from 'node:path'
+import pstHeaderPlugin from './build/pstHeaderPlugin.js'
+import shunterNamePlugin from './build/shunterNamePlugin.js'
+import manualArrivalTimePlugin from './build/manualArrivalTimePlugin.js'
+import manualUnplannedSrPlugin from './build/manualUnplannedSrPlugin.js'
+import requestGroupVisibilityPlugin from './build/requestGroupVisibilityPlugin.js'
+import automaticParkingPstPlugin from './build/automaticParkingPstPlugin.js'
+import automaticExcelCompletedByPlugin from './build/automaticExcelCompletedByPlugin.js'
+import automaticNextWashOperPlugin from './build/automaticNextWashOperPlugin.js'
+import manualNextWashMaintPlugin from './build/manualNextWashMaintPlugin.js'
+import hideWeekdayTidTimePlugin from './build/hideWeekdayTidTimePlugin.js'
+
+// Cloudflare Pages build config.
+// The original Base44 Vite plugin was removed and replaced with a normal Vite alias.
+export default defineConfig({
+  logLevel: 'error',
+  define: {
+    'import.meta.env.RAILOG_BUILD': JSON.stringify({
+      commit: process.env.CF_PAGES_COMMIT_SHA || '',
+      builtAt: new Date().toISOString(),
+    }),
+  },
+  plugins: [pstHeaderPlugin(), shunterNamePlugin(), manualArrivalTimePlugin(), manualUnplannedSrPlugin(), requestGroupVisibilityPlugin(), automaticParkingPstPlugin(), automaticExcelCompletedByPlugin(), automaticNextWashOperPlugin(), manualNextWashMaintPlugin(), hideWeekdayTidTimePlugin(), react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});

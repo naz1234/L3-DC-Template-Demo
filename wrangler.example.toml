@@ -1,0 +1,40 @@
+name = "raillog"
+compatibility_date = "2026-05-26"
+pages_build_output_dir = "dist"
+
+[vars]
+AUTH_MODE = "cloudflare_access"
+CF_ACCESS_TEAM_DOMAIN = "your-team.cloudflareaccess.com"
+CF_ACCESS_AUD = "PUT_ACCESS_APPLICATION_AUD_TAGS_HERE_COMMA_SEPARATED"
+TURNSTILE_SITE_KEY = "PUT_ENVIRONMENT_TURNSTILE_SITE_KEY_HERE"
+
+# Store OCC_ALLOWED_EMAILS as an encrypted Pages secret for the retained
+# Cloudflare Access rollback mode. Store AUTH_ALLOWED_EMAILS as a separate
+# encrypted Pages secret for custom PIN mode. Use one approved staff address
+# per line for both secrets, and never place real addresses in this file or Git.
+# AUTH_ADDITIONAL_ALLOWED_EMAILS optionally adds exact external addresses in
+# custom PIN mode. Store it as an encrypted secret on both Pages and the mailer.
+
+# Custom PIN mode also requires encrypted AUTH_HMAC_SECRET,
+# AUTH_EMAIL_SERVICE_TOKEN, and TURNSTILE_SECRET_KEY secrets.
+# AUTH_PRESENCE_HIDDEN_EMAILS and AUTH_PRESENCE_ADDITIONAL_HIDDEN_EMAILS are
+# optional encrypted Pages-only secrets. Their combined entries must be unique
+# and approved in AUTH_ALLOWED_EMAILS or AUTH_ADDITIONAL_ALLOWED_EMAILS.
+# Never add their values here.
+# Gmail OAuth credentials belong only on the private AUTH_EMAIL_SERVICE Worker,
+# never on the Pages project or in this file.
+# Keep AUTH_MODE=cloudflare_access until docs/custom-pin-auth.md is complete.
+
+# For Cloudflare Pages, create a D1 database first, then bind it as DB.
+# Replace database_id with your own D1 Database ID before renaming this file to wrangler.toml.
+[[d1_databases]]
+binding = "DB"
+database_name = "raillog-db"
+database_id = "PUT_YOUR_D1_DATABASE_ID_HERE"
+
+# The private mailer has no public route; Pages calls it through this binding.
+[[services]]
+binding = "AUTH_EMAIL_SERVICE"
+service = "l3-dc-auth-email"
+
+# See docs/custom-pin-auth.md and workers/auth-email/README.md.
