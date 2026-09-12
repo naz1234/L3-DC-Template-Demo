@@ -1833,14 +1833,6 @@ const INSERTION_LIVE_LOCAL_EDIT_HOLD_MS = 30000;
 const INSERTION_LIVE_POST_SAVE_HOLD_MS = 12000;
 const SIDEBAR_COLLAPSED_KEY = "depotSidebarCollapsed_v1";
 const SIDEBAR_AUTO_HIDE_MS = 3000;
-const ADM_SESSION_KEY = "admAdminUnlocked_v1";
-const ALM_SESSION_KEY = "almAlarmUnlocked_v1";
-const OVT_SESSION_KEY = "ovtOvertimeUnlocked_v1";
-const ODO_SESSION_KEY = "odoReadingUnlocked_v1";
-const PROTECTED_SHORTCUTS_SESSION_KEY = "protectedShortcutsUnlocked_v1";
-const PROTECTED_SHORTCUT_KEYS = new Set(["odo", "alarm", "overtime", "checklist", "admin", "about"]);
-const ADM_LOGIN_ID = "admin";
-const ADM_LOGIN_PASSWORD = "921016";
 const ADMIN_NOTES_STORAGE_KEY = "admModernNotes_v1";
 const ADMIN_NOTE_LIVE_RECORD_KEY = "adm-modern-notes-main";
 const ADMIN_NOTE_SAVE_DEBOUNCE_MS = 700;
@@ -17662,56 +17654,6 @@ export default function DepotStablingPage() {
     return "stabling";
   };
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
-  const [protectedShortcutCredentials, setProtectedShortcutCredentials] = useState({ id: "", password: "" });
-  const [protectedShortcutError, setProtectedShortcutError] = useState("");
-  const [isProtectedShortcutLoginOpen, setIsProtectedShortcutLoginOpen] = useState(false);
-  const [areProtectedShortcutsUnlocked, setAreProtectedShortcutsUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem(PROTECTED_SHORTCUTS_SESSION_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [adminCredentials, setAdminCredentials] = useState({ id: "", password: "" });
-  const [adminError, setAdminError] = useState("");
-  const [isAdminUnlocked, setIsAdminUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem(ADM_SESSION_KEY) === "true"
-        || sessionStorage.getItem(PROTECTED_SHORTCUTS_SESSION_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [alarmCredentials, setAlarmCredentials] = useState({ id: "", password: "" });
-  const [alarmError, setAlarmError] = useState("");
-  const [isAlarmUnlocked, setIsAlarmUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem(ALM_SESSION_KEY) === "true"
-        || sessionStorage.getItem(PROTECTED_SHORTCUTS_SESSION_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [overtimeCredentials, setOvertimeCredentials] = useState({ id: "", password: "" });
-  const [overtimeError, setOvertimeError] = useState("");
-  const [isOvertimeUnlocked, setIsOvertimeUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem(OVT_SESSION_KEY) === "true"
-        || sessionStorage.getItem(PROTECTED_SHORTCUTS_SESSION_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [odoCredentials, setOdoCredentials] = useState({ id: "", password: "" });
-  const [odoError, setOdoError] = useState("");
-  const [isOdoUnlocked, setIsOdoUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem(ODO_SESSION_KEY) === "true"
-        || sessionStorage.getItem(PROTECTED_SHORTCUTS_SESSION_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
   const [adminNotes, setAdminNotes] = useState(() => loadAdminNotes());
   const [adminSearch, setAdminSearch] = useState("");
   const [alarmSearch, setAlarmSearch] = useState("");
@@ -17875,183 +17817,6 @@ export default function DepotStablingPage() {
     scrollTarget.scrollTo({ left: nextLeft, behavior: "smooth" });
   }, []);
 
-  const closeProtectedShortcutLogin = useCallback(() => {
-    setIsProtectedShortcutLoginOpen(false);
-    setProtectedShortcutCredentials({ id: "", password: "" });
-    setProtectedShortcutError("");
-  }, []);
-
-  const handleProtectedShortcutLogin = useCallback((event) => {
-    event.preventDefault();
-    const loginId = String(protectedShortcutCredentials.id || "").trim();
-    const loginPassword = String(protectedShortcutCredentials.password || "");
-
-    if (loginId === ADM_LOGIN_ID && loginPassword === ADM_LOGIN_PASSWORD) {
-      setAreProtectedShortcutsUnlocked(true);
-      setIsProtectedShortcutLoginOpen(false);
-      setProtectedShortcutCredentials({ id: "", password: "" });
-      setProtectedShortcutError("");
-      setIsOdoUnlocked(true);
-      setIsAlarmUnlocked(true);
-      setIsOvertimeUnlocked(true);
-      setIsAdminUnlocked(true);
-      setOdoError("");
-      setAlarmError("");
-      setOvertimeError("");
-      setAdminError("");
-      try {
-        sessionStorage.setItem(PROTECTED_SHORTCUTS_SESSION_KEY, "true");
-        sessionStorage.setItem(ODO_SESSION_KEY, "true");
-        sessionStorage.setItem(ALM_SESSION_KEY, "true");
-        sessionStorage.setItem(OVT_SESSION_KEY, "true");
-        sessionStorage.setItem(ADM_SESSION_KEY, "true");
-      } catch {}
-      return;
-    }
-
-    setAreProtectedShortcutsUnlocked(false);
-    setProtectedShortcutError("Invalid admin ID or password.");
-    try { sessionStorage.removeItem(PROTECTED_SHORTCUTS_SESSION_KEY); } catch {}
-  }, [protectedShortcutCredentials]);
-
-  const lockProtectedShortcuts = useCallback(() => {
-    setAreProtectedShortcutsUnlocked(false);
-    setIsProtectedShortcutLoginOpen(false);
-    setProtectedShortcutCredentials({ id: "", password: "" });
-    setProtectedShortcutError("");
-    setIsOdoUnlocked(false);
-    setIsAlarmUnlocked(false);
-    setIsOvertimeUnlocked(false);
-    setIsAdminUnlocked(false);
-    setOdoCredentials({ id: "", password: "" });
-    setAlarmCredentials({ id: "", password: "" });
-    setOvertimeCredentials({ id: "", password: "" });
-    setAdminCredentials({ id: "", password: "" });
-    setOdoError("");
-    setAlarmError("");
-    setOvertimeError("");
-    setAdminError("");
-    setAlarmSearch("");
-    try {
-      sessionStorage.removeItem(PROTECTED_SHORTCUTS_SESSION_KEY);
-      sessionStorage.removeItem(ODO_SESSION_KEY);
-      sessionStorage.removeItem(ALM_SESSION_KEY);
-      sessionStorage.removeItem(OVT_SESSION_KEY);
-      sessionStorage.removeItem(ADM_SESSION_KEY);
-    } catch {}
-
-    if (PROTECTED_SHORTCUT_KEYS.has(activeTab)) {
-      setActiveTab("stabling");
-      const targetHash = "#/depot-stabling";
-      if (window.location.hash !== targetHash) {
-        window.location.hash = targetHash;
-      }
-      window.setTimeout(() => window.location.reload(), 0);
-    }
-  }, [activeTab]);
-
-  const handleProtectedShortcutToggle = useCallback(() => {
-    if (areProtectedShortcutsUnlocked) {
-      lockProtectedShortcuts();
-      return;
-    }
-
-    setProtectedShortcutCredentials({ id: "", password: "" });
-    setProtectedShortcutError("");
-    setIsProtectedShortcutLoginOpen(true);
-  }, [areProtectedShortcutsUnlocked, lockProtectedShortcuts]);
-
-  const handleAdminLogin = useCallback((event) => {
-    event.preventDefault();
-    const loginId = String(adminCredentials.id || "").trim();
-    const loginPassword = String(adminCredentials.password || "");
-
-    if (loginId === ADM_LOGIN_ID && loginPassword === ADM_LOGIN_PASSWORD) {
-      setIsAdminUnlocked(true);
-      setAdminError("");
-      setAdminCredentials({ id: "", password: "" });
-      try { sessionStorage.setItem(ADM_SESSION_KEY, "true"); } catch {}
-      return;
-    }
-
-    setIsAdminUnlocked(false);
-    setAdminError("Invalid admin ID or password.");
-    try { sessionStorage.removeItem(ADM_SESSION_KEY); } catch {}
-  }, [adminCredentials]);
-
-  const handleAdminLogout = useCallback(() => {
-    lockProtectedShortcuts();
-    setAdminNotesLoading(false);
-    setAdminNotesSaving(false);
-    setAdminNotesLiveStatus("Local cache ready");
-  }, [lockProtectedShortcuts]);
-
-  const handleAlarmLogin = useCallback((event) => {
-    event.preventDefault();
-    const loginId = String(alarmCredentials.id || "").trim();
-    const loginPassword = String(alarmCredentials.password || "");
-
-    if (loginId === ADM_LOGIN_ID && loginPassword === ADM_LOGIN_PASSWORD) {
-      setIsAlarmUnlocked(true);
-      setAlarmError("");
-      setAlarmCredentials({ id: "", password: "" });
-      try { sessionStorage.setItem(ALM_SESSION_KEY, "true"); } catch {}
-      return;
-    }
-
-    setIsAlarmUnlocked(false);
-    setAlarmError("Invalid ID or password.");
-    try { sessionStorage.removeItem(ALM_SESSION_KEY); } catch {}
-  }, [alarmCredentials]);
-
-  const handleAlarmLogout = useCallback(() => {
-    lockProtectedShortcuts();
-  }, [lockProtectedShortcuts]);
-
-  const handleOvertimeLogin = useCallback((event) => {
-    event.preventDefault();
-    const loginId = String(overtimeCredentials.id || "").trim();
-    const loginPassword = String(overtimeCredentials.password || "");
-
-    if (loginId === ADM_LOGIN_ID && loginPassword === ADM_LOGIN_PASSWORD) {
-      setIsOvertimeUnlocked(true);
-      setOvertimeError("");
-      setOvertimeCredentials({ id: "", password: "" });
-      try { sessionStorage.setItem(OVT_SESSION_KEY, "true"); } catch {}
-      return;
-    }
-
-    setIsOvertimeUnlocked(false);
-    setOvertimeError("Invalid admin ID or password.");
-    try { sessionStorage.removeItem(OVT_SESSION_KEY); } catch {}
-  }, [overtimeCredentials]);
-
-  const handleOvertimeLogout = useCallback(() => {
-    lockProtectedShortcuts();
-  }, [lockProtectedShortcuts]);
-
-  const handleOdoLogin = useCallback((event) => {
-    event.preventDefault();
-    const loginId = String(odoCredentials.id || "").trim();
-    const loginPassword = String(odoCredentials.password || "");
-
-    if (loginId === ADM_LOGIN_ID && loginPassword === ADM_LOGIN_PASSWORD) {
-      setIsOdoUnlocked(true);
-      setOdoError("");
-      setOdoCredentials({ id: "", password: "" });
-      try { sessionStorage.setItem(ODO_SESSION_KEY, "true"); } catch {}
-      return;
-    }
-
-    setIsOdoUnlocked(false);
-    setOdoError("Invalid admin ID or password.");
-    try { sessionStorage.removeItem(ODO_SESSION_KEY); } catch {}
-  }, [odoCredentials]);
-
-  const handleOdoLogout = useCallback(() => {
-    lockProtectedShortcuts();
-  }, [lockProtectedShortcuts]);
-
   const loadAdminNotesLive = useCallback(async () => {
     const entity = getAdminNoteEntity();
     const entityReady = isAdminNoteEntityReady(entity);
@@ -18111,9 +17876,9 @@ export default function DepotStablingPage() {
   }, []);
 
   useEffect(() => {
-    if (!isAdminUnlocked) return;
+    if (activeTab !== "admin" || adminNotesLoadedRef.current) return;
     loadAdminNotesLive();
-  }, [isAdminUnlocked, loadAdminNotesLive]);
+  }, [activeTab, loadAdminNotesLive]);
 
   const adminSearchKeyword = adminSearch.trim().toLowerCase();
 
@@ -18216,16 +17981,6 @@ export default function DepotStablingPage() {
     } catch {}
   }, [isSidebarCollapsed]);
 
-  useEffect(() => {
-    if (!isProtectedShortcutLoginOpen) return undefined;
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") closeProtectedShortcutLogin();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [closeProtectedShortcutLogin, isProtectedShortcutLoginOpen]);
 
   useEffect(() => {
     adminNotesCurrentRef.current = adminNotes;
@@ -18233,7 +17988,7 @@ export default function DepotStablingPage() {
   }, [adminNotes]);
 
   useEffect(() => {
-    if (!isAdminUnlocked || !adminNotesLoadedRef.current) return undefined;
+    if (!adminNotesLoadedRef.current) return undefined;
 
     const entity = getAdminNoteEntity();
     if (!isAdminNoteEntityReady(entity)) {
@@ -18299,7 +18054,7 @@ export default function DepotStablingPage() {
         adminNotesSaveTimerRef.current = null;
       }
     };
-  }, [adminNotes, isAdminUnlocked]);
+  }, [adminNotes]);
 
   useEffect(() => {
     if (isSidebarCollapsed) return undefined;
@@ -22100,7 +21855,6 @@ export default function DepotStablingPage() {
             },
             { key: "about", label: "About", code: "ABT", to: "/about" },
           ]
-            .filter(({ key }) => !PROTECTED_SHORTCUT_KEYS.has(key) || areProtectedShortcutsUnlocked)
             .map(({ key, label, code, to }) => {
             const isActive = activeTab === key;
             const bottomShortcutClass = key === "odo" ? " mt-auto" : "";
@@ -22152,121 +21906,8 @@ export default function DepotStablingPage() {
             );
             })}
 
-          <button
-            type="button"
-            onClick={handleProtectedShortcutToggle}
-            aria-expanded={areProtectedShortcutsUnlocked}
-            aria-haspopup={areProtectedShortcutsUnlocked ? undefined : "dialog"}
-            title={areProtectedShortcutsUnlocked ? "Hide and lock protected pages" : "Show protected pages"}
-            className={`${areProtectedShortcutsUnlocked ? "" : "mt-auto"} flex w-full items-center py-2.5 text-xs font-semibold text-[#7eb8e0] transition hover:bg-[#0f2d4a] hover:text-white ${isSidebarCollapsed ? "justify-center rounded-lg px-1" : "justify-between rounded-lg border border-[#1a3a56] bg-[#071828]/60 px-3"}`}
-          >
-            {!isSidebarCollapsed && (
-              <span className="text-[10px] font-bold uppercase tracking-wide">
-                {areProtectedShortcutsUnlocked ? "Hide protected" : "Protected pages"}
-              </span>
-            )}
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              {areProtectedShortcutsUnlocked
-                ? <path d="M18 15l-6-6-6 6" />
-                : <path d="M6 9l6 6 6-6" />}
-            </svg>
-          </button>
         </aside>
 
-        {isProtectedShortcutLoginOpen && (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020b14]/80 px-4 backdrop-blur-sm"
-            role="presentation"
-            onMouseDown={closeProtectedShortcutLogin}
-          >
-            <section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="protected-shortcut-login-title"
-              className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#2b4f6b] bg-[#071e33] shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              <div className="flex items-start justify-between border-b border-[#1a3a56] px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#2b4f6b] bg-[#0c2e4a] text-[#8bd5ff]">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="4" y="10" width="16" height="11" rx="2" />
-                      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                    </svg>
-                  </span>
-                  <div>
-                    <h2 id="protected-shortcut-login-title" className="text-sm font-black text-white">Protected pages</h2>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeProtectedShortcutLogin}
-                  aria-label="Close protected pages login"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#7eb8e0] transition hover:bg-[#0f2d4a] hover:text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleProtectedShortcutLogin} className="space-y-4 px-5 py-5">
-                <label className="block">
-                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-[#7eb8e0]">Admin ID</span>
-                  <input
-                    type="text"
-                    value={protectedShortcutCredentials.id}
-                    onChange={(event) => {
-                      setProtectedShortcutCredentials((current) => ({ ...current, id: event.target.value }));
-                      if (protectedShortcutError) setProtectedShortcutError("");
-                    }}
-                    autoComplete="username"
-                    autoFocus
-                    required
-                    className="w-full rounded-xl border border-[#2b4f6b] bg-[#041523] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-[#486b84] focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/20"
-                    placeholder="Admin ID"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-[#7eb8e0]">Password</span>
-                  <input
-                    type="password"
-                    value={protectedShortcutCredentials.password}
-                    onChange={(event) => {
-                      setProtectedShortcutCredentials((current) => ({ ...current, password: event.target.value }));
-                      if (protectedShortcutError) setProtectedShortcutError("");
-                    }}
-                    autoComplete="current-password"
-                    required
-                    className="w-full rounded-xl border border-[#2b4f6b] bg-[#041523] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-[#486b84] focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/20"
-                    placeholder="Password"
-                  />
-                </label>
-
-                {protectedShortcutError && (
-                  <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">
-                    {protectedShortcutError}
-                  </p>
-                )}
-
-                <div className="flex justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={closeProtectedShortcutLogin}
-                    className="rounded-lg border border-[#2b4f6b] px-4 py-2 text-xs font-bold text-[#9bc7e4] transition hover:bg-[#0f2d4a] hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="rounded-lg border border-[#4f8ef7] bg-[#1d4f8f] px-4 py-2 text-xs font-black text-white shadow-[0_0_18px_rgba(79,142,247,0.18)] transition hover:bg-[#2863ad] active:scale-95"
-                  >
-                    Unlock pages
-                  </button>
-                </div>
-              </form>
-            </section>
-          </div>
-        )}
 
         {/* Main Content */}
         <main ref={mainContentScrollRef} className="flex-1 min-w-0 overflow-auto">
@@ -22483,96 +22124,20 @@ export default function DepotStablingPage() {
         )}
 
         {activeTab === "odo" && (
-          isOdoUnlocked ? (
-            <div className="w-full px-2 pb-10 pt-6">
+          <div className="w-full px-2 pb-10 pt-6">
               <div className="mb-3 w-full max-w-[968px] rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#4f8ef7]/35 bg-[#0f2d4a] text-[10px] font-semibold tracking-[0.16em] text-[#bceaff]">
                     ODO
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-normal uppercase tracking-[0.22em] text-[#6db6e8]">Restricted access</p>
                     <h2 className="truncate text-[17px] font-normal leading-tight text-white">ODO Reading</h2>
-                    <p className="mt-0.5 text-[10px] font-semibold text-[#8ea8c0]">
-                      Admin session unlocked for this browser tab.
-                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleOdoLogout}
-                    className="rounded-xl border border-[#2b4f6b] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#8bd5ff] transition hover:border-[#4f8ef7] hover:bg-[#0f2d4a] hover:text-white active:scale-[0.98]"
-                  >
-                    Logout
-                  </button>
                 </div>
               </div>
 
               <OdoReading />
             </div>
-          ) : (
-            <div className="w-full px-2 pb-10 pt-6">
-              <div className="mx-auto w-full max-w-[620px]">
-                <div className="mx-auto w-full max-w-[380px] overflow-hidden rounded-[24px] border border-[#23506f]/80 bg-[#061827]/95 shadow-[0_20px_70px_rgba(0,0,0,0.38)] backdrop-blur">
-                  <div className="relative border-b border-[#1a3a56]/80 bg-gradient-to-br from-[#0d3455] via-[#08223a] to-[#061827] px-5 py-5">
-                    <div className="absolute right-5 top-5 h-10 w-10 rounded-full border border-[#4f8ef7]/25 bg-[#4f8ef7]/10 blur-[1px]" />
-                    <div className="relative flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f8ef7]/40 bg-[#0f2d4a] text-[11px] font-semibold tracking-[0.22em] text-[#bceaff] shadow-[0_0_22px_rgba(79,142,247,0.18)]">
-                        ODO
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-normal uppercase tracking-[0.24em] text-[#6db6e8]">Admin access</p>
-                        <h2 className="mt-1 text-[18px] font-semibold text-white">ODO Login</h2>
-                      </div>
-                    </div>
-                    <p className="relative mt-4 text-[11px] leading-relaxed text-[#8dc7ed]">
-                      Enter admin ID and password to unlock this page.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleOdoLogin} className="px-5 py-5">
-                    <label className="block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      ID
-                      <input
-                        value={odoCredentials.id}
-                        onChange={(event) => {
-                          setOdoCredentials((prev) => ({ ...prev, id: event.target.value }));
-                          setOdoError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                      />
-                    </label>
-                    <label className="mt-4 block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      Password
-                      <input
-                        type="password"
-                        value={odoCredentials.password}
-                        onChange={(event) => {
-                          setOdoCredentials((prev) => ({ ...prev, password: event.target.value }));
-                          setOdoError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="current-password"
-                      />
-                    </label>
-                    {odoError && (
-                      <p className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-[11px] font-normal text-red-200">
-                        {odoError}
-                      </p>
-                    )}
-                    <button
-                      type="submit"
-                      className="mt-5 flex h-10 w-full items-center justify-center rounded-xl border border-[#4f8ef7]/60 bg-[#1b5f93] text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_22px_rgba(79,142,247,0.22)] transition hover:bg-[#2476b4] active:scale-[0.99]"
-                    >
-                      Login
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )
         )}
 
         {activeTab === "pst" && (
@@ -22630,8 +22195,7 @@ export default function DepotStablingPage() {
         )}
 
         {activeTab === "alarm" && (
-          isAlarmUnlocked ? (
-            <div className="w-full px-2 pb-10 pt-6">
+          <div className="w-full px-2 pb-10 pt-6">
               <div className="mx-auto mb-2.5 w-full max-w-4xl space-y-2.5">
                 <div className="rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
                   <div className="flex items-center gap-2">
@@ -22645,13 +22209,6 @@ export default function DepotStablingPage() {
                         Search matches window header title.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleAlarmLogout}
-                      className="rounded-2xl border border-[#2b4f6b] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8bd5ff] transition hover:border-[#4f8ef7] hover:bg-[#0f2d4a] hover:text-white active:scale-[0.98]"
-                    >
-                      Logout
-                    </button>
                   </div>
                 </div>
 
@@ -22668,136 +22225,12 @@ export default function DepotStablingPage() {
 
               <AlarmContent search={alarmSearch} />
             </div>
-          ) : (
-            <div className="w-full px-2 pb-10 pt-6">
-              <div className="mx-auto w-full max-w-[620px]">
-                <div className="mx-auto w-full max-w-[380px] overflow-hidden rounded-[24px] border border-[#23506f]/80 bg-[#061827]/95 shadow-[0_20px_70px_rgba(0,0,0,0.38)] backdrop-blur">
-                  <div className="relative border-b border-[#1a3a56]/80 bg-gradient-to-br from-[#0d3455] via-[#08223a] to-[#061827] px-5 py-5">
-                    <div className="absolute right-5 top-5 h-10 w-10 rounded-full border border-[#4f8ef7]/25 bg-[#4f8ef7]/10 blur-[1px]" />
-                    <div className="relative flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f8ef7]/40 bg-[#0f2d4a] text-[11px] font-semibold tracking-[0.22em] text-[#bceaff] shadow-[0_0_22px_rgba(79,142,247,0.18)]">
-                        ALM
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-normal uppercase tracking-[0.24em] text-[#6db6e8]">Alarm access</p>
-                        <h2 className="mt-1 text-[18px] font-semibold text-white">Alarm Login</h2>
-                      </div>
-                    </div>
-                    <p className="relative mt-4 text-[11px] leading-relaxed text-[#8dc7ed]">
-                      Enter ID and password to unlock this page.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleAlarmLogin} className="px-5 py-5">
-                    <label className="block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      ID
-                      <input
-                        value={alarmCredentials.id}
-                        onChange={(event) => {
-                          setAlarmCredentials((prev) => ({ ...prev, id: event.target.value }));
-                          setAlarmError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                      />
-                    </label>
-                    <label className="mt-4 block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      Password
-                      <input
-                        type="password"
-                        value={alarmCredentials.password}
-                        onChange={(event) => {
-                          setAlarmCredentials((prev) => ({ ...prev, password: event.target.value }));
-                          setAlarmError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="current-password"
-                      />
-                    </label>
-                    {alarmError && (
-                      <p className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-[11px] font-normal text-red-200">
-                        {alarmError}
-                      </p>
-                    )}
-                    <button
-                      type="submit"
-                      className="mt-5 flex h-10 w-full items-center justify-center rounded-xl border border-[#4f8ef7]/60 bg-[#1b5f93] text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_22px_rgba(79,142,247,0.22)] transition hover:bg-[#2476b4] active:scale-[0.99]"
-                    >
-                      Login
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )
         )}
 
         {activeTab === "overtime" && (
           <div className="w-full px-2 pb-8 pt-4 sm:px-4">
             <div className="mx-auto w-full max-w-[1320px]">
-              {!isOvertimeUnlocked ? (
-                <div className="mx-auto w-full max-w-[380px] overflow-hidden rounded-[24px] border border-[#23506f]/80 bg-[#061827]/95 shadow-[0_20px_70px_rgba(0,0,0,0.38)] backdrop-blur">
-                  <div className="relative border-b border-[#1a3a56]/80 bg-gradient-to-br from-[#0d3455] via-[#08223a] to-[#061827] px-5 py-5">
-                    <div className="absolute right-5 top-5 h-10 w-10 rounded-full border border-[#4f8ef7]/25 bg-[#4f8ef7]/10 blur-[1px]" />
-                    <div className="relative flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f8ef7]/40 bg-[#0f2d4a] text-[11px] font-semibold tracking-[0.22em] text-[#bceaff] shadow-[0_0_22px_rgba(79,142,247,0.18)]">
-                        OVT
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-normal uppercase tracking-[0.24em] text-[#6db6e8]">Admin access</p>
-                        <h2 className="mt-1 text-[18px] font-semibold text-white">Overtime Login</h2>
-                      </div>
-                    </div>
-                    <p className="relative mt-4 text-[11px] leading-relaxed text-[#8dc7ed]">
-                      Enter the Admin ID and password to unlock the Overtime page.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleOvertimeLogin} className="px-5 py-5">
-                    <label className="block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      ID
-                      <input
-                        value={overtimeCredentials.id}
-                        onChange={(event) => {
-                          setOvertimeCredentials((prev) => ({ ...prev, id: event.target.value }));
-                          setOvertimeError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                      />
-                    </label>
-                    <label className="mt-4 block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      Password
-                      <input
-                        type="password"
-                        value={overtimeCredentials.password}
-                        onChange={(event) => {
-                          setOvertimeCredentials((prev) => ({ ...prev, password: event.target.value }));
-                          setOvertimeError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="current-password"
-                      />
-                    </label>
-                    {overtimeError && (
-                      <p className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-[11px] font-normal text-red-200">
-                        {overtimeError}
-                      </p>
-                    )}
-                    <button
-                      type="submit"
-                      className="mt-5 flex h-10 w-full items-center justify-center rounded-xl border border-[#4f8ef7]/60 bg-[#1b5f93] text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_22px_rgba(79,142,247,0.22)] transition hover:bg-[#2476b4] active:scale-[0.99]"
-                    >
-                      Login
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                <div className="space-y-3">
+              <div className="space-y-3">
                   <div className="rounded-[20px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_14px_42px_rgba(0,0,0,0.22)]">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#4f8ef7]/35 bg-[#0f2d4a] text-[10px] font-semibold tracking-[0.14em] text-[#bceaff]">
@@ -22806,22 +22239,13 @@ export default function DepotStablingPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-normal uppercase tracking-[0.22em] text-[#6db6e8]">Overtime</p>
                         <h2 className="truncate text-[16px] font-normal leading-tight text-white">Overtime</h2>
-                        <p className="mt-0.5 text-[10px] font-semibold text-emerald-300">Admin session unlocked for this browser tab.</p>
                       </div>
                       <div id="overtime-toolbar-actions" className="order-3 flex w-full justify-end sm:order-none sm:w-auto" />
-                      <button
-                        type="button"
-                        onClick={handleOvertimeLogout}
-                        className="rounded-2xl border border-[#2b4f6b] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8bd5ff] transition hover:border-[#4f8ef7] hover:bg-[#0f2d4a] hover:text-white active:scale-[0.98]"
-                      >
-                        Logout
-                      </button>
                     </div>
                   </div>
 
                   <OvertimeTracker />
                 </div>
-              )}
             </div>
           </div>
         )}
@@ -22842,117 +22266,20 @@ export default function DepotStablingPage() {
 
         {activeTab === "checklist" && (
           <div className="w-full px-2 pb-10 pt-3">
-            {areProtectedShortcutsUnlocked ? (
-              <ChecklistWorkspace />
-            ) : (
-              <div className="mx-auto flex min-h-[420px] w-full max-w-[620px] items-center justify-center">
-                <section className="w-full max-w-[390px] overflow-hidden rounded-[24px] border border-[#23506f]/80 bg-[#061827]/95 shadow-[0_20px_70px_rgba(0,0,0,0.38)]">
-                  <div className="border-b border-[#1a3a56]/80 bg-gradient-to-br from-[#0d3455] via-[#08223a] to-[#061827] px-5 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f8ef7]/40 bg-[#0f2d4a] text-[11px] font-semibold tracking-[0.18em] text-[#bceaff]">CHK</div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.24em] text-[#6db6e8]">Protected page</p>
-                        <h2 className="mt-1 text-[18px] font-semibold text-white">Duty Checklist</h2>
-                      </div>
-                    </div>
-                    <p className="mt-4 text-[11px] leading-relaxed text-[#8dc7ed]">Unlock the protected pages to view and update the shared duty checklist.</p>
-                  </div>
-                  <div className="p-5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProtectedShortcutCredentials({ id: "", password: "" });
-                        setProtectedShortcutError("");
-                        setIsProtectedShortcutLoginOpen(true);
-                      }}
-                      className="flex h-10 w-full items-center justify-center rounded-xl border border-[#4f8ef7]/60 bg-[#1b5f93] text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_0_22px_rgba(79,142,247,0.22)] transition hover:bg-[#2476b4] active:scale-[0.99]"
-                    >
-                      Unlock protected pages
-                    </button>
-                  </div>
-                </section>
-              </div>
-            )}
+            <ChecklistWorkspace />
           </div>
         )}
 
         {activeTab === "about" && (
           <div className="w-full px-2 pb-10 pt-3">
-            <AboutWorkspace
-              unlocked={areProtectedShortcutsUnlocked}
-              onUnlock={() => {
-                setProtectedShortcutCredentials({ id: "", password: "" });
-                setProtectedShortcutError("");
-                setIsProtectedShortcutLoginOpen(true);
-              }}
-            />
+            <AboutWorkspace />
           </div>
         )}
 
         {activeTab === "admin" && (
           <div className="w-full px-2 pb-10 pt-6">
             <div className="mx-auto w-full max-w-[620px]">
-              {!isAdminUnlocked ? (
-                <div className="mx-auto w-full max-w-[380px] overflow-hidden rounded-[24px] border border-[#23506f]/80 bg-[#061827]/95 shadow-[0_20px_70px_rgba(0,0,0,0.38)] backdrop-blur">
-                  <div className="relative border-b border-[#1a3a56]/80 bg-gradient-to-br from-[#0d3455] via-[#08223a] to-[#061827] px-5 py-5">
-                    <div className="absolute right-5 top-5 h-10 w-10 rounded-full border border-[#4f8ef7]/25 bg-[#4f8ef7]/10 blur-[1px]" />
-                    <div className="relative flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f8ef7]/40 bg-[#0f2d4a] text-[11px] font-semibold tracking-[0.22em] text-[#bceaff] shadow-[0_0_22px_rgba(79,142,247,0.18)]">
-                        ADM
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-normal uppercase tracking-[0.24em] text-[#6db6e8]">Admin access</p>
-                        <h2 className="mt-1 text-[18px] font-semibold text-white">Admin Login</h2>
-                      </div>
-                    </div>
-                    <p className="relative mt-4 text-[11px] leading-relaxed text-[#8dc7ed]">
-                      Enter admin ID and password to unlock this page.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleAdminLogin} className="px-5 py-5">
-                    <label className="block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      ID
-                      <input
-                        value={adminCredentials.id}
-                        onChange={(event) => {
-                          setAdminCredentials((prev) => ({ ...prev, id: event.target.value }));
-                          setAdminError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                      />
-                    </label>
-                    <label className="mt-4 block text-[10px] font-normal uppercase tracking-wide text-[#7eb8e0]">
-                      Password
-                      <input
-                        type="password"
-                        value={adminCredentials.password}
-                        onChange={(event) => {
-                          setAdminCredentials((prev) => ({ ...prev, password: event.target.value }));
-                          setAdminError("");
-                        }}
-                        className="mt-2 h-10 w-full rounded-xl border border-[#2b4f6b] bg-[#eef5ff] px-3 text-[13px] font-normal text-[#061827] outline-none transition focus:border-[#4f8ef7] focus:ring-2 focus:ring-[#4f8ef7]/25"
-                        autoComplete="current-password"
-                      />
-                    </label>
-                    {adminError && (
-                      <p className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-[11px] font-normal text-red-200">
-                        {adminError}
-                      </p>
-                    )}
-                    <button
-                      type="submit"
-                      className="mt-5 flex h-10 w-full items-center justify-center rounded-xl border border-[#4f8ef7]/60 bg-[#1b5f93] text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_22px_rgba(79,142,247,0.22)] transition hover:bg-[#2476b4] active:scale-[0.99]"
-                    >
-                      Login
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
+              <div className="space-y-2.5">
                   <div className="rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
                     <div className="flex items-center gap-2">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#4f8ef7]/35 bg-[#0f2d4a] text-[10px] font-semibold tracking-[0.16em] text-[#bceaff]">
@@ -22981,13 +22308,6 @@ export default function DepotStablingPage() {
                         title="Add parent"
                       >
                         <Plus className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAdminLogout}
-                        className="rounded-2xl border border-[#2b4f6b] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8bd5ff] transition hover:border-[#4f8ef7] hover:bg-[#0f2d4a] hover:text-white active:scale-[0.98]"
-                      >
-                        Logout
                       </button>
                     </div>
                   </div>
@@ -23124,7 +22444,6 @@ export default function DepotStablingPage() {
                     )}
                   </div>
                 </div>
-              )}
             </div>
           </div>
         )}

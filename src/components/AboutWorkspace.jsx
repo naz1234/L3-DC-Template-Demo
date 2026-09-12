@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ExternalLink, GitPullRequest, Info, Loader2, LockKeyhole, RefreshCw, Search } from 'lucide-react';
+import { ExternalLink, GitPullRequest, Info, Loader2, RefreshCw, Search } from 'lucide-react';
 
 const REPOSITORY_URL = 'https://github.com/naz1234/cloudflare_Railog';
 const MERGED_UPDATES_URL = `${REPOSITORY_URL}/pulls?q=is%3Apr+is%3Amerged+base%3Amain`;
@@ -15,7 +15,7 @@ function formatDate(value) {
 const panelClass = 'rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#294b63] dark:bg-[#071827]';
 const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-sky-400 hover:text-sky-700 disabled:cursor-wait disabled:opacity-60 dark:border-[#375a73] dark:bg-[#0b253b] dark:text-sky-100 dark:hover:border-sky-400';
 
-export default function AboutWorkspace({ unlocked, onUnlock }) {
+export default function AboutWorkspace() {
   const [feed, setFeed] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +24,6 @@ export default function AboutWorkspace({ unlocked, onUnlock }) {
   const requestRef = useRef(null);
 
   const loadUpdates = useCallback(async () => {
-    if (!unlocked) return;
     requestRef.current?.abort();
     const controller = new AbortController();
     requestRef.current = controller;
@@ -35,9 +34,7 @@ export default function AboutWorkspace({ unlocked, onUnlock }) {
         credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json' },
       });
       if (!response.ok) {
-        throw new Error(response.status === 401 || response.status === 403
-          ? 'Your login has expired. Sign in again to load updates.'
-          : 'Updates could not be loaded. Please try again shortly.');
+        throw new Error('Updates could not be loaded. Please try again shortly.');
       }
       const data = await response.json();
       if (!Array.isArray(data.updates)) throw new Error('Updates could not be loaded. Please try again.');
@@ -47,18 +44,18 @@ export default function AboutWorkspace({ unlocked, onUnlock }) {
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [unlocked]);
+  }, []);
 
   useEffect(() => {
-    if (unlocked) loadUpdates();
-    const timer = unlocked ? window.setInterval(() => {
+    loadUpdates();
+    const timer = window.setInterval(() => {
       if (document.visibilityState === 'visible') loadUpdates();
-    }, 5 * 60 * 1000) : null;
+    }, 5 * 60 * 1000);
     return () => {
       requestRef.current?.abort();
       if (timer) window.clearInterval(timer);
     };
-  }, [loadUpdates, unlocked]);
+  }, [loadUpdates]);
 
   const updates = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -67,18 +64,6 @@ export default function AboutWorkspace({ unlocked, onUnlock }) {
   }, [feed, search]);
   const buildCommit = /^[a-f0-9]{40}$/i.test(BUILD.commit || '') ? BUILD.commit : '';
   const buildUpdate = feed?.updates.find((update) => update.commit === buildCommit && buildCommit);
-
-  if (!unlocked) {
-    return (
-      <section className={`${panelClass} mx-auto mt-12 max-w-md p-6 text-slate-800 dark:text-slate-100`}>
-        <LockKeyhole className="mb-4 h-8 w-8 text-sky-500" aria-hidden="true" />
-        <p className="text-xs font-semibold uppercase tracking-widest text-sky-600 dark:text-sky-300">Protected page · ABT</p>
-        <h1 className="mt-2 text-xl font-bold">About Railog</h1>
-        <p className="my-4 text-sm text-slate-500 dark:text-slate-400">Unlock protected pages to view the website version and update history.</p>
-        <button type="button" className={buttonClass} onClick={onUnlock}>Unlock protected pages</button>
-      </section>
-    );
-  }
 
   return (
     <section className="mx-auto w-full max-w-5xl space-y-5 px-2 py-4 text-slate-800 dark:text-slate-100" aria-labelledby="about-heading">

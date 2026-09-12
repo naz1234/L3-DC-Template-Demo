@@ -2,7 +2,9 @@
 
 The main application and its operational APIs are available without signing in. Opening the site loads the depot page and initializes the D1 schema directly. There is no email allowlist, PIN request, Turnstile check, session expiry, online-staff identity display, or sign-out action in the app.
 
-The middleware retains the same-origin check on POST, PUT, PATCH, and DELETE requests. Existing page-specific admin password controls are separate from the removed email login.
+ODO Reading, Alarm, Overtime, Checklist, Admin, and About appear directly in the navigation and open without a password. The Protected pages menu, shared admin credentials, and per-tab unlock state have been removed. Admin notes load when the Admin page is first opened.
+
+The middleware retains the same-origin check on POST, PUT, PATCH, and DELETE requests.
 
 ## Deploying an existing Pages project
 
