@@ -1,6 +1,8 @@
 # Public OAuth information site
 
-Google requires an External/In production OAuth app to have a publicly accessible home page, privacy policy, and terms page. The static files in [`oauth-info-site`](../oauth-info-site) provide those pages without exposing the Railog application or its authentication service.
+> Retired companion site: the main app no longer uses email-PIN authentication. This separate OAuth information site is retained for the former mailer deployment and is not needed to run the app. See [public access deployment notes](public-access.md).
+
+Google requires an External/In production OAuth app to have a publicly accessible home page, privacy policy, and terms page. The static files in [`oauth-info-site`](../oauth-info-site) provide those pages for the retired mailer.
 
 ## Cloudflare Pages project
 

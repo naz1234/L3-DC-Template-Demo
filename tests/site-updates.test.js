@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSiteUpdatesHandler } from '../functions/api/site-updates.js';
 import { normalizeMergedUpdates } from '../functions/lib/site-updates.js';
-import { createAuthMiddleware } from '../functions/_middleware.js';
+import { onRequest } from '../functions/_middleware.js';
 
 const NOW = Date.parse('2026-09-08T04:00:00Z');
 const pull = (number, extra = {}) => ({
@@ -89,13 +89,14 @@ test('malformed GitHub responses do not become an empty successful history', asy
   assert.equal((await handler(context())).status, 503);
 });
 
-test('existing session middleware protects the new feed', async () => {
-  let reachedFeed = false;
-  const middleware = createAuthMiddleware({
-    resolveMode: () => 'custom_pin',
-    authorizeCustom: async () => ({ authorized: false, status: 401 }),
+test('update history is available without a login session', async () => {
+  const handler = createSiteUpdatesHandler({
+    now: () => NOW,
+    fetchImpl: async () => github([pull(15)]),
   });
-  const response = await middleware({ ...context(), env: {}, next: () => { reachedFeed = true; } });
-  assert.equal(response.status, 401);
-  assert.equal(reachedFeed, false);
+  const response = await onRequest({
+    ...context(), env: {}, next: () => handler(context()),
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).updates[0].number, 15);
 });

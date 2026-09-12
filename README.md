@@ -2,9 +2,9 @@
 
 ## Production access
 
-Production uses the [custom approved-staff email-PIN system](docs/custom-pin-auth.md). Each user enters their own approved Flow Metro email address, receives a short-lived code at that address, and is identified by the verified session. The [Cloudflare Access configuration](docs/cloudflare-access.md) is retained as a rollback gate until the per-user mailer, Turnstile, D1 identity/presence migration, and full verification checklist pass.
+The application opens directly without signing in. The email-PIN screen, Turnstile check, session requirement, online-staff display, and sign-out control have been removed. Application pages and operational APIs no longer require an approved email address or Cloudflare Access token.
 
-The approved staff list is private configuration. Store it only in encrypted Cloudflare secrets; never commit staff addresses to this public repository, documentation, test fixtures, or deployment examples.
+Existing `/login` and `/login.html` links redirect to `/`. Retired `/api/auth/*` endpoints return `410 Gone`. See [public access deployment notes](docs/public-access.md) for the separate Cloudflare Access gate and obsolete auth configuration.
 
 - 12am rows now use the same steel-blue whole-row theme as 7pm, Fri, Sat and PH.
 - Selecting 12am under West Depot automatically selects 12am under East Depot.

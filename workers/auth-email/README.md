@@ -1,6 +1,8 @@
 # L3 DC authentication mailer
 
-This private Worker is the only component allowed to send custom-login PIN emails. It has no `workers.dev`, preview, route, or custom-domain endpoint and is called from Pages through the `AUTH_EMAIL_SERVICE` Service binding. It exchanges a dedicated Gmail OAuth refresh token for a short-lived access token and uses the Gmail API `gmail.send` scope.
+> Retired companion mailer: the main app no longer uses email-PIN authentication or calls this Worker. The source is retained for the separately deployed mailer and is not needed to run the app. See [public access deployment notes](../../docs/public-access.md).
+
+This private Worker sent custom-login PIN emails. It has no `workers.dev`, preview, route, or custom-domain endpoint and was called from Pages through the `AUTH_EMAIL_SERVICE` Service binding. It exchanges a dedicated Gmail OAuth refresh token for a short-lived access token and uses the Gmail API `gmail.send` scope. The following setup notes describe the retired deployment.
 
 Before deployment:
 
