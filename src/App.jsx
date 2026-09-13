@@ -20,17 +20,8 @@ const AppRoutes = () => {
       <Route path="/train-movement" element={<DepotStabling />} />
       <Route path="/pst-train-prep" element={<DepotStabling />} />
       <Route path="/insertion" element={<DepotStabling />} />
-      <Route path="/train-washing" element={<DepotStabling />} />
       <Route path="/odo-reading" element={<DepotStabling />} />
       <Route path="/possession" element={<DepotStabling />} />
-      <Route path="/alarm" element={<DepotStabling />} />
-      <Route path="/overtime" element={<DepotStabling />} />
-      <Route path="/ovt" element={<DepotStabling />} />
-      <Route path="/ot" element={<DepotStabling />} />
-      <Route path="/roster" element={<DepotStabling />} />
-      <Route path="/ros" element={<DepotStabling />} />
-      <Route path="/checklist" element={<DepotStabling />} />
-      <Route path="/chk" element={<DepotStabling />} />
       <Route path="/sleep" element={<DepotStabling />} />
       <Route path="/slp" element={<DepotStabling />} />
       <Route path="/admin" element={<DepotStabling />} />

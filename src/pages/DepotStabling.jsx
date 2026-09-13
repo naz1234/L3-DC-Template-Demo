@@ -4,7 +4,6 @@ import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CheckCircle2, FileSpreadsheet, FileText, Loader2, Upload, X, Bookmark, ChevronDown, ChevronRight, ExternalLink, Pencil, Plus, Trash2, Copy, ClipboardCheck, Shield, Wind, Undo2, Redo2, Flame, Download, Search, ArrowUp, ArrowDown, Check, Sun, Moon, TrainFront, Clock3, RefreshCw } from "lucide-react";
 import MaintenancePanel from "../components/MaintenancePanel";
-import TrainWashing from "../components/TrainWashing";
 import OdoReading from "../components/OdoReading";
 import TIDReferenceTable, { getTidReferenceRemark } from "../components/TIDReferenceTable";
 import ActionTooltip from "../components/ActionTooltip";
@@ -12,9 +11,6 @@ import PSTLogOutput from "../components/depot/PSTLogOutput";
 import PSTManualEntry from "../components/depot/PSTManualEntry";
 import InsertionLogOutput from "../components/depot/InsertionLogOutput";
 import MaspoTrainMovementChecker from "../components/depot/MaspoTrainMovementChecker";
-import OvertimeTracker from "../components/OvertimeTracker";
-import RosterWorkspace from "../components/RosterWorkspace";
-import ChecklistWorkspace from "../components/ChecklistWorkspace";
 import AboutWorkspace from "../components/AboutWorkspace";
 import SleepModeWorkspace from "../components/SleepModeWorkspace";
 import OfficialEastExcelGenerator from "../components/OfficialEastExcelGenerator";
@@ -17638,17 +17634,12 @@ export default function DepotStablingPage() {
   useEffect(() => { saveEastInsertionTimeOffset(eastInsertionTimeOffsetMinutes); }, [eastInsertionTimeOffsetMinutes]);
 
   const getTabFromPath = (path) => {
-    if (path === "/train-washing") return "washing";
     if (path === "/train-movement") return "movement";
     if (path === "/pst-train-prep") return "pst";
     if (path === "/insertion") return "insertion";
     if (path === "/odo-reading") return "odo";
     if (path === "/possession" || path === "/pss") return "possession";
-    if (path === "/alarm") return "alarm";
-    if (path === "/overtime" || path === "/ovt" || path === "/ot") return "overtime";
-    if (path === "/roster" || path === "/ros") return "roster";
     if (path === "/sleep" || path === "/slp") return "sleep";
-    if (path === "/checklist" || path === "/chk") return "checklist";
     if (path === "/admin" || path === "/adm") return "admin";
     if (path === "/about" || path === "/abt") return "about";
     return "stabling";
@@ -17656,7 +17647,6 @@ export default function DepotStablingPage() {
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
   const [adminNotes, setAdminNotes] = useState(() => loadAdminNotes());
   const [adminSearch, setAdminSearch] = useState("");
-  const [alarmSearch, setAlarmSearch] = useState("");
   const [adminEditingNoteId, setAdminEditingNoteId] = useState(null);
   const [adminTitleDraft, setAdminTitleDraft] = useState("");
   const [adminNotesLoading, setAdminNotesLoading] = useState(false);
@@ -21746,17 +21736,6 @@ export default function DepotStablingPage() {
               ),
             },
             {
-              key: "washing",
-              label: "Train Washing",
-              code: "WSH",
-              to: "/train-washing",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-                </svg>
-              ),
-            },
-            {
               key: "possession",
               label: "Possession Log",
               code: "PSS",
@@ -21764,19 +21743,6 @@ export default function DepotStablingPage() {
               icon: (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="10" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/><circle cx="9" cy="16" r="1"/><circle cx="15" cy="16" r="1"/>
-                </svg>
-              ),
-            },
-            {
-              key: "roster",
-              label: "Roster",
-              code: "ROS",
-              to: "/roster",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="17" rx="2"/>
-                  <path d="M8 2v4M16 2v4M3 9h18"/>
-                  <path d="M8 13h3M13 13h3M8 17h3M13 17h3"/>
                 </svg>
               ),
             },
@@ -21799,45 +21765,6 @@ export default function DepotStablingPage() {
               icon: (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-              ),
-            },
-            {
-              key: "alarm",
-              label: "Alarm",
-              code: "ALM",
-              to: "/alarm",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              ),
-            },
-            {
-              key: "overtime",
-              label: "Overtime",
-              code: "OVT",
-              to: "/overtime",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9"/>
-                  <path d="M12 7v5l3 2"/>
-                  <path d="M8 2h8"/>
-                </svg>
-              ),
-            },
-            {
-              key: "checklist",
-              label: "Checklist",
-              code: "CHK",
-              to: "/checklist",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="3" width="16" height="18" rx="2"/>
-                  <path d="M8 8l1.5 1.5L12 7"/><path d="M8 14l1.5 1.5L12 13"/>
-                  <path d="M14 9h3M14 15h3"/>
                 </svg>
               ),
             },
@@ -21911,7 +21838,7 @@ export default function DepotStablingPage() {
 
         {/* Main Content */}
         <main ref={mainContentScrollRef} className="flex-1 min-w-0 overflow-auto">
-        <div className={`max-w-[1700px] mx-auto px-5 ${activeTab === "roster" ? "pt-1 pb-5" : "py-5"}`}> 
+        <div className="max-w-[1700px] mx-auto px-5 py-5">
 
   {activeTab === "stabling" && (
   <div
@@ -22114,15 +22041,6 @@ export default function DepotStablingPage() {
           />
         )}
 
-        {activeTab === "washing" && (
-          <div className="theme-washing-workspace grid w-full items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.85fr)]">
-            <TrainWashing />
-            <div className="min-w-0">
-              <TrainWashingDocxExport />
-            </div>
-          </div>
-        )}
-
         {activeTab === "odo" && (
           <div className="w-full px-2 pb-10 pt-6">
               <div className="mb-3 w-full max-w-[968px] rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
@@ -22194,79 +22112,9 @@ export default function DepotStablingPage() {
           </div>
         )}
 
-        {activeTab === "alarm" && (
-          <div className="w-full px-2 pb-10 pt-6">
-              <div className="mx-auto mb-2.5 w-full max-w-4xl space-y-2.5">
-                <div className="rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#4f8ef7]/35 bg-[#0f2d4a] text-[10px] font-semibold tracking-[0.16em] text-[#bceaff]">
-                      ALM
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-normal uppercase tracking-[0.22em] text-[#6db6e8]">Alarm windows</p>
-                      <h2 className="truncate text-[17px] font-normal leading-tight text-white">Alarm Template</h2>
-                      <p className="mt-0.5 text-[10px] font-semibold text-[#8ea8c0]">
-                        Search matches window header title.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    value={alarmSearch}
-                    onChange={(event) => setAlarmSearch(event.target.value)}
-                    placeholder="Search alarm window title"
-                    className="h-11 w-full rounded-2xl border border-[#d7e3ee] bg-[#f8fbff] pl-11 pr-4 text-[13px] font-normal text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#93c5fd] focus:ring-2 focus:ring-[#93c5fd]/30"
-                  />
-                </div>
-              </div>
-
-              <AlarmContent search={alarmSearch} />
-            </div>
-        )}
-
-        {activeTab === "overtime" && (
-          <div className="w-full px-2 pb-8 pt-4 sm:px-4">
-            <div className="mx-auto w-full max-w-[1320px]">
-              <div className="space-y-3">
-                  <div className="rounded-[20px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_14px_42px_rgba(0,0,0,0.22)]">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#4f8ef7]/35 bg-[#0f2d4a] text-[10px] font-semibold tracking-[0.14em] text-[#bceaff]">
-                        OVT
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-normal uppercase tracking-[0.22em] text-[#6db6e8]">Overtime</p>
-                        <h2 className="truncate text-[16px] font-normal leading-tight text-white">Overtime</h2>
-                      </div>
-                      <div id="overtime-toolbar-actions" className="order-3 flex w-full justify-end sm:order-none sm:w-auto" />
-                    </div>
-                  </div>
-
-                  <OvertimeTracker />
-                </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "roster" && (
-          <div className="w-full px-2 pb-10 pt-0">
-            <div className="mx-auto w-full max-w-[1680px]">
-              <RosterWorkspace />
-            </div>
-          </div>
-        )}
-
         {activeTab === "sleep" && (
           <div className="w-full px-2 pb-10 pt-3">
             <SleepModeWorkspace westData={westData} eastData={eastData} />
-          </div>
-        )}
-
-        {activeTab === "checklist" && (
-          <div className="w-full px-2 pb-10 pt-3">
-            <ChecklistWorkspace />
           </div>
         )}
 

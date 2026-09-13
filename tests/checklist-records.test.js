@@ -49,17 +49,13 @@ test("latest checklist record is selected only for the active duty scope", () =>
   assert.equal(selectLatestChecklistRecord(records, "2026-08-10:late")?.id, "new");
 });
 
-test("checklist page is wired to its route and Cloudflare entity", () => {
-  const appSource = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-  const depotSource = readFileSync(new URL("../src/pages/DepotStabling.jsx", import.meta.url), "utf8");
+test("historical checklist data retains its Cloudflare entity", () => {
   const clientSource = readFileSync(new URL("../src/api/base44Client.js", import.meta.url), "utf8");
   const entityFunctionSource = readFileSync(
     new URL("../functions/api/entities/[[path]].js", import.meta.url),
     "utf8",
   );
 
-  assert.match(appSource, /path="\/checklist"/);
-  assert.match(depotSource, /<ChecklistWorkspace\s*\/>/);
   assert.match(clientSource, /'ChecklistRecord'/);
   assert.match(entityFunctionSource, /'ChecklistRecord'/);
 });
