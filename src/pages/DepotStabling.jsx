@@ -13,8 +13,6 @@ import InsertionLogOutput from "../components/depot/InsertionLogOutput";
 import MaspoTrainMovementChecker from "../components/depot/MaspoTrainMovementChecker";
 import AboutWorkspace from "../components/AboutWorkspace";
 import SleepModeWorkspace from "../components/SleepModeWorkspace";
-import OfficialEastExcelGenerator from "../components/OfficialEastExcelGenerator";
-import OccBriefingFormSigner from "../components/OccBriefingFormSigner";
 import RemovalPdfEditor from "../components/depot/RemovalPdfEditor";
 import EastNineAmRemovalPdfEditor from "../components/depot/EastNineAmRemovalPdfEditor";
 import { summarizeInsertionTidUsage } from "../lib/insertionTidUsage";
@@ -14655,172 +14653,8 @@ function buildPSTExportLinesFromVisibleState({
   return sortPSTLogLinesByTime([...exportLines, ...manualLogLines]);
 }
 
-function buildAPUMismatchChecklistLog(trainIds = []) {
-  const normalizedTrainIds = normalizeAPUMismatchTrainIds({ west: trainIds }).west;
-  return normalizedTrainIds
-    .map((trainId) => `${trainId} APU Missmatch alarm\nSR:`)
-    .join("\n\n");
-}
-
-function APUMismatchChecklist({
-  depot = "west",
-  data = {},
-  selectedTrainIds = [],
-  onSelectedTrainIdsChange,
-}) {
-  const [copyStatus, setCopyStatus] = useState("");
-  const isWestDepot = depot === "west";
-  const depotShortLabel = isWestDepot ? "WD" : "ED";
-  const accent = isWestDepot ? "#38bdf8" : "#c084fc";
-  const roads = isWestDepot ? WEST_ROADS : EAST_ROADS;
-  const savedSelectedTrainIds = normalizeAPUMismatchTrainIds({
-    [depot]: selectedTrainIds,
-  })[depot];
-  const availableTrainIds = collectStablingTrainIds(data, roads)
-    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true, sensitivity: "base" }));
-  const availableTrainIdSet = new Set(availableTrainIds);
-  const normalizedSelectedTrainIds = savedSelectedTrainIds
-    .filter((trainId) => availableTrainIdSet.has(trainId));
-  const savedSelectionKey = savedSelectedTrainIds.join("|");
-  const visibleSelectionKey = normalizedSelectedTrainIds.join("|");
-  const selectedTrainIdSet = new Set(normalizedSelectedTrainIds);
-  const generatedLog = buildAPUMismatchChecklistLog(normalizedSelectedTrainIds);
-
-  useEffect(() => {
-    if (savedSelectionKey === visibleSelectionKey) return;
-    onSelectedTrainIdsChange?.(normalizedSelectedTrainIds);
-  }, [normalizedSelectedTrainIds, onSelectedTrainIdsChange, savedSelectionKey, visibleSelectionKey]);
-
-  useEffect(() => {
-    setCopyStatus("");
-  }, [generatedLog]);
-
-  const toggleTrain = (trainId) => {
-    const nextSelected = new Set(normalizedSelectedTrainIds);
-    if (nextSelected.has(trainId)) nextSelected.delete(trainId);
-    else nextSelected.add(trainId);
-    onSelectedTrainIdsChange?.(Array.from(nextSelected));
-  };
-
-  const copyGeneratedLog = async () => {
-    const copied = await copyTextToClipboard(generatedLog).catch(() => false);
-    setCopyStatus(copied ? "copied" : "failed");
-    window.setTimeout(() => setCopyStatus(""), 1800);
-  };
-
-  return (
-    <section
-      className="theme-apu-mismatch-panel w-full overflow-hidden rounded-2xl border lg:w-[420px]"
-      data-depot={depot}
-      style={{
-        background: "linear-gradient(145deg, rgba(7,24,40,0.98), rgba(6,31,50,0.96))",
-        borderColor: `${accent}55`,
-        boxShadow: `0 16px 30px rgba(0,0,0,0.30), 0 0 18px ${accent}12, inset 0 1px 0 rgba(255,255,255,0.05)`,
-      }}
-    >
-      <div className="theme-apu-mismatch-header flex items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: `${accent}38` }}>
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
-            style={{ backgroundColor: `${accent}18`, borderColor: `${accent}55`, color: accent }}
-          >
-            <ClipboardCheck size={16} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="truncate text-[13px] font-semibold uppercase tracking-[0.08em] text-white">
-              APU Missmatch SR Generator
-            </h3>
-            <p className="mt-0.5 text-[10px] font-medium text-slate-400">Tick trains showing an APU alarm</p>
-          </div>
-        </div>
-        <span
-          className="theme-apu-mismatch-count shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-          style={{ borderColor: `${accent}66`, backgroundColor: `${accent}16`, color: accent }}
-        >
-          {normalizedSelectedTrainIds.length} selected
-        </span>
-      </div>
-
-      <div className="grid gap-3 p-4">
-        {availableTrainIds.length > 0 ? (
-          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
-            {availableTrainIds.map((trainId) => {
-              const isSelected = selectedTrainIdSet.has(trainId);
-              return (
-                <button
-                  key={`${depot}-apu-mismatch-${trainId}`}
-                  type="button"
-                  onClick={() => toggleTrain(trainId)}
-                  aria-pressed={isSelected}
-                  className={`theme-apu-mismatch-train ${isSelected ? "is-selected" : ""} flex h-8 items-center justify-center gap-1 rounded-lg border text-[11px] font-semibold transition-all hover:-translate-y-0.5`}
-                  style={{
-                    backgroundColor: isSelected ? `${accent}2a` : "rgba(8,31,50,0.92)",
-                    borderColor: isSelected ? `${accent}cc` : "rgba(64,111,145,0.58)",
-                    color: isSelected ? "#ffffff" : "#b8cce0",
-                    boxShadow: isSelected ? `0 0 12px ${accent}28, inset 0 1px 0 rgba(255,255,255,0.08)` : "inset 0 1px 0 rgba(255,255,255,0.03)",
-                  }}
-                >
-                  <span
-                    className="flex h-3.5 w-3.5 items-center justify-center rounded-full border"
-                    style={{ borderColor: isSelected ? accent : "#496b84", backgroundColor: isSelected ? accent : "transparent" }}
-                  >
-                    {isSelected && <Check size={10} strokeWidth={3} />}
-                  </span>
-                  {trainId}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="theme-apu-mismatch-empty rounded-xl border border-dashed border-[#31516b] px-3 py-4 text-center text-[11px] font-medium text-slate-400">
-            No trains available in {depotShortLabel} stabling.
-          </div>
-        )}
-
-        <div className="theme-apu-mismatch-output overflow-hidden rounded-xl border border-[#244761] bg-[#03111d]">
-          <div className="theme-apu-mismatch-output-header flex items-center justify-between gap-2 border-b border-[#244761] px-3 py-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: accent }}>
-              Generated Log
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={copyGeneratedLog}
-                disabled={!generatedLog}
-                className="theme-apu-mismatch-copy inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[10px] font-semibold transition-all enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
-                style={{ borderColor: `${accent}77`, backgroundColor: `${accent}18`, color: "#ffffff" }}
-              >
-                <Copy size={12} />
-                {copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Retry" : "Copy Log"}
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectedTrainIdsChange?.([])}
-                disabled={normalizedSelectedTrainIds.length === 0}
-                className="theme-apu-mismatch-clear inline-flex h-7 items-center gap-1 rounded-md border border-red-400/50 bg-red-950/25 px-2 text-[10px] font-semibold text-red-200 transition-all enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <Trash2 size={12} /> Clear
-              </button>
-            </div>
-          </div>
-          {generatedLog ? (
-            <pre className="theme-apu-mismatch-log max-h-52 min-h-[88px] overflow-auto whitespace-pre-wrap px-3 py-2.5 font-mono text-[12px] font-semibold leading-[1.45] text-slate-100">
-              {generatedLog}
-            </pre>
-          ) : (
-            <div className="theme-apu-mismatch-placeholder flex min-h-[88px] items-center justify-center px-3 py-2 text-center text-[11px] font-medium text-slate-500">
-              Tick one or more trains to generate the APU Missmatch log.
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
 function PSTTabContent
-({ westData, eastData, maintenanceMap, pstRequests, onAddPSTRequest, onRemovePSTRequest, onClearPSTRequests, onRenamePSTRequestGroup, onDeletePSTRequestGroup, onTogglePSTRequestGroupHidden, pstState, prepState, logLines, onPSTTick, onPSTStartTimeChange, onPrepTick, onPrepCompletionTimeChange, onRemoveLog, onAddManualLog, onRemoveManualLog, onClearDepotLog, onClearDepotPSTOnly, onClearDepotPrepOnly, taNameState, onTaNameChange, completedByNames, onCompletedByChange, apuMismatchTrainIds, onAPUMismatchTrainIdsChange, pstLiveStatusText, pstLiveStatusClass, pstLiveDebug, onRefreshPSTStabling, onUndoPSTStabling, onRedoPSTStabling, westCanUndoPSTStabling = false, westCanRedoPSTStabling = false, eastCanUndoPSTStabling = false, eastCanRedoPSTStabling = false, westPSTStablingDirty = false, eastPSTStablingDirty = false, onClearPSTStablingTrains, onEditablePSTTrainIdChange }) {
+({ westData, eastData, maintenanceMap, pstRequests, onAddPSTRequest, onRemovePSTRequest, onClearPSTRequests, onRenamePSTRequestGroup, onDeletePSTRequestGroup, onTogglePSTRequestGroupHidden, pstState, prepState, logLines, onPSTTick, onPSTStartTimeChange, onPrepTick, onPrepCompletionTimeChange, onRemoveLog, onAddManualLog, onRemoveManualLog, onClearDepotLog, onClearDepotPSTOnly, onClearDepotPrepOnly, taNameState, onTaNameChange, completedByNames, onCompletedByChange, pstLiveStatusText, pstLiveStatusClass, pstLiveDebug, onRefreshPSTStabling, onUndoPSTStabling, onRedoPSTStabling, westCanUndoPSTStabling = false, westCanRedoPSTStabling = false, eastCanUndoPSTStabling = false, eastCanRedoPSTStabling = false, westPSTStablingDirty = false, eastPSTStablingDirty = false, onClearPSTStablingTrains, onEditablePSTTrainIdChange }) {
   const [trainSearch, setTrainSearch] = useState("");
   const trainSearchKey = normalizeTrainId(trainSearch);
   const trainSearchLocations = trainSearchKey ? getMainStablingLocations(westData, eastData) : {};
@@ -14831,7 +14665,6 @@ function PSTTabContent
   const [copyingExcelDepot, setCopyingExcelDepot] = useState("");
   const [copiedExcelDepot, setCopiedExcelDepot] = useState("");
   const safeCompletedByNames = completedByNames || { west: "", east: "" };
-  const safeAPUMismatchTrainIds = normalizeAPUMismatchTrainIds(apuMismatchTrainIds);
   const sortedLogLines = sortPSTLogLinesByTime(logLines);
   const exportLogLines = buildPSTExportLinesFromVisibleState({
     westData,
@@ -15183,12 +15016,6 @@ function PSTTabContent
         </div>
         <div className="flex w-full flex-col gap-3 lg:w-[420px]">
           {renderDepotControls("west")}
-          <APUMismatchChecklist
-            depot="west"
-            data={westData}
-            selectedTrainIds={safeAPUMismatchTrainIds.west}
-            onSelectedTrainIdsChange={(trainIds) => onAPUMismatchTrainIdsChange?.("west", trainIds)}
-          />
           <MaintenancePanelShell
             fullWidth
             requests={pstRequests}
@@ -15218,12 +15045,6 @@ function PSTTabContent
         </div>
         <div className="flex w-full flex-col gap-3 lg:w-[420px]">
           {renderDepotControls("east")}
-          <APUMismatchChecklist
-            depot="east"
-            data={eastData}
-            selectedTrainIds={safeAPUMismatchTrainIds.east}
-            onSelectedTrainIdsChange={(trainIds) => onAPUMismatchTrainIdsChange?.("east", trainIds)}
-          />
         </div>
       </div>
     </div>
@@ -21919,25 +21740,6 @@ export default function DepotStablingPage() {
 
       <RequestedTrainActionSummary requests={requests} />
 
-      <OfficialEastExcelGenerator
-        eastRemovalLog={buildTrainRemRemovalLog(
-          trainRemCheckState,
-          "east",
-          maintenanceMap,
-          activeTimetable,
-          eastData,
-        )}
-        westRemovalLog={buildTrainRemRemovalLog(
-          trainRemCheckState,
-          "west",
-          maintenanceMap,
-          activeTimetable,
-          westData,
-        )}
-      />
-
-      <OccBriefingFormSigner />
-
       <TrainRequestedNotInRemoval
         requests={requests}
         trainRemState={trainRemCheckState}
@@ -22087,8 +21889,6 @@ export default function DepotStablingPage() {
             onTaNameChange={handleActiveTaNameChange}
             completedByNames={activePSTCompletedByNames}
             onCompletedByChange={handleActiveCompletedByChange}
-            apuMismatchTrainIds={activePSTAPUMismatchTrainIds}
-            onAPUMismatchTrainIdsChange={handleActiveAPUMismatchTrainIdsChange}
             pstLiveStatusText={pstLiveStatusText}
             pstLiveStatusClass={pstLiveStatusClass}
             pstLiveDebug={pstLiveDebug}

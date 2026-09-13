@@ -75,13 +75,13 @@ test("PST renders its own MaintenancePanel controls", () => {
   assert.match(pstTabSource, /showImportTools=\{false\}/);
 });
 
-test("PST Remarks is full-width directly below the West APU Mismatch generator", () => {
-  const westApuIndex = pstTabSource.indexOf('<APUMismatchChecklist\n            depot="west"');
+test("PST Remarks is full-width directly below the West depot controls", () => {
+  const westControlsIndex = pstTabSource.indexOf('{renderDepotControls("west")}');
   const remarksIndex = pstTabSource.indexOf('<MaintenancePanelShell\n            fullWidth');
   const eastSectionIndex = pstTabSource.indexOf('title="EAST DEPOT — PST / TRAIN PREP"');
 
-  assert.ok(westApuIndex >= 0);
-  assert.ok(remarksIndex > westApuIndex);
+  assert.ok(westControlsIndex >= 0);
+  assert.ok(remarksIndex > westControlsIndex);
   assert.ok(eastSectionIndex > remarksIndex);
   assert.equal((pstTabSource.match(/panelTitle="PST Remarks"/g) || []).length, 1);
   assert.match(pstTabSource, /<MaintenancePanelShell\s+fullWidth[\s\S]*?panelTitle="PST Remarks"/);
