@@ -2,8 +2,9 @@ import { Fragment, useState, useEffect, useLayoutEffect, useRef, useCallback, us
 import * as XLSX from "xlsx";
 import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { CheckCircle2, FileSpreadsheet, FileText, Loader2, Upload, X, Bookmark, ChevronDown, ChevronRight, ExternalLink, Pencil, Plus, Trash2, Copy, ClipboardCheck, Shield, Wind, Undo2, Redo2, Flame, Download, Search, ArrowUp, ArrowDown, Check, Sun, Moon, TrainFront, Clock3, RefreshCw } from "lucide-react";
+import { CheckCircle2, FileSpreadsheet, FileText, Loader2, Upload, X, Bookmark, ChevronDown, ExternalLink, Pencil, Plus, Trash2, Copy, ClipboardCheck, Shield, Wind, Undo2, Redo2, Flame, Download, Search, Check, Sun, Moon, TrainFront, Clock3, RefreshCw } from "lucide-react";
 import MaintenancePanel from "../components/MaintenancePanel";
+import TrainWashing from "../components/TrainWashing";
 import OdoReading from "../components/OdoReading";
 import TIDReferenceTable, { getTidReferenceRemark } from "../components/TIDReferenceTable";
 import ActionTooltip from "../components/ActionTooltip";
@@ -11,7 +12,6 @@ import PSTLogOutput from "../components/depot/PSTLogOutput";
 import PSTManualEntry from "../components/depot/PSTManualEntry";
 import InsertionLogOutput from "../components/depot/InsertionLogOutput";
 import MaspoTrainMovementChecker from "../components/depot/MaspoTrainMovementChecker";
-import AboutWorkspace from "../components/AboutWorkspace";
 import SleepModeWorkspace from "../components/SleepModeWorkspace";
 import RemovalPdfEditor from "../components/depot/RemovalPdfEditor";
 import EastNineAmRemovalPdfEditor from "../components/depot/EastNineAmRemovalPdfEditor";
@@ -17455,25 +17455,16 @@ export default function DepotStablingPage() {
   useEffect(() => { saveEastInsertionTimeOffset(eastInsertionTimeOffsetMinutes); }, [eastInsertionTimeOffsetMinutes]);
 
   const getTabFromPath = (path) => {
+    if (path === "/train-washing") return "washing";
     if (path === "/train-movement") return "movement";
     if (path === "/pst-train-prep") return "pst";
     if (path === "/insertion") return "insertion";
     if (path === "/odo-reading") return "odo";
     if (path === "/possession" || path === "/pss") return "possession";
     if (path === "/sleep" || path === "/slp") return "sleep";
-    if (path === "/admin" || path === "/adm") return "admin";
-    if (path === "/about" || path === "/abt") return "about";
     return "stabling";
   };
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
-  const [adminNotes, setAdminNotes] = useState(() => loadAdminNotes());
-  const [adminSearch, setAdminSearch] = useState("");
-  const [adminEditingNoteId, setAdminEditingNoteId] = useState(null);
-  const [adminTitleDraft, setAdminTitleDraft] = useState("");
-  const [adminNotesLoading, setAdminNotesLoading] = useState(false);
-  const [adminNotesSaving, setAdminNotesSaving] = useState(false);
-  const [adminNotesLiveStatus, setAdminNotesLiveStatus] = useState("Local cache ready");
-  const [adminNotesDbReady, setAdminNotesDbReady] = useState(() => isAdminNoteEntityReady());
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     try {
       return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
@@ -17492,11 +17483,6 @@ export default function DepotStablingPage() {
   const bookmarkMenuRef = useRef(null);
   const mainContentScrollRef = useRef(null);
   const stablingHorizontalScrollRef = useRef(null);
-  const adminNotesLiveIdRef = useRef(null);
-  const adminNotesLoadedRef = useRef(false);
-  const adminNotesLastSavedJsonRef = useRef("");
-  const adminNotesSaveTimerRef = useRef(null);
-  const adminNotesCurrentRef = useRef(adminNotes);
 
   const [selectedTimetableType, setSelectedTimetableType] = useState(() => loadActiveTimetableType());
   const [timetableRecords, setTimetableRecords] = useState(() => {
@@ -17628,148 +17614,6 @@ export default function DepotStablingPage() {
     scrollTarget.scrollTo({ left: nextLeft, behavior: "smooth" });
   }, []);
 
-  const loadAdminNotesLive = useCallback(async () => {
-    const entity = getAdminNoteEntity();
-    const entityReady = isAdminNoteEntityReady(entity);
-
-    adminNotesLoadedRef.current = false;
-    setAdminNotesDbReady(entityReady);
-
-    if (!entityReady) {
-      adminNotesLoadedRef.current = true;
-      setAdminNotesLiveStatus("Local only - D1 entity unavailable");
-      return;
-    }
-
-    setAdminNotesLoading(true);
-    setAdminNotesLiveStatus("Loading live notes...");
-
-    try {
-      const records = await entity.list("-updatedAt");
-      const liveRecord = (Array.isArray(records) ? records : []).find((record) => (
-        record?.recordKey === ADMIN_NOTE_LIVE_RECORD_KEY
-      ));
-
-      if (liveRecord && Array.isArray(liveRecord.notes)) {
-        const normalizedNotes = normalizeAdminNoteList(liveRecord.notes);
-        const notesJson = JSON.stringify(normalizedNotes);
-
-        adminNotesLiveIdRef.current = liveRecord.id;
-        adminNotesLastSavedJsonRef.current = notesJson;
-        setAdminNotes(normalizedNotes);
-        saveAdminNotes(normalizedNotes);
-        setAdminNotesDbReady(true);
-        setAdminNotesLiveStatus("Live saved");
-        return;
-      }
-
-      const notesToCreate = normalizeAdminNoteList(adminNotesCurrentRef.current);
-      const created = await entity.create({
-        recordKey: ADMIN_NOTE_LIVE_RECORD_KEY,
-        notes: notesToCreate,
-        updatedAt: new Date().toISOString(),
-      });
-
-      adminNotesLiveIdRef.current = created?.id || null;
-      adminNotesLastSavedJsonRef.current = JSON.stringify(notesToCreate);
-      setAdminNotes(notesToCreate);
-      saveAdminNotes(notesToCreate);
-      setAdminNotesDbReady(true);
-      setAdminNotesLiveStatus("Live saved");
-    } catch (error) {
-      console.error("Admin notes live load failed:", error);
-      setAdminNotesDbReady(false);
-      setAdminNotesLiveStatus("D1 unavailable - local saved");
-    } finally {
-      adminNotesLoadedRef.current = true;
-      setAdminNotesLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab !== "admin" || adminNotesLoadedRef.current) return;
-    loadAdminNotesLive();
-  }, [activeTab, loadAdminNotesLive]);
-
-  const adminSearchKeyword = adminSearch.trim().toLowerCase();
-
-  const visibleAdminNotes = useMemo(() => {
-    if (!adminSearchKeyword) return adminNotes;
-
-    return adminNotes.filter((item) => {
-      const title = String(item.title || "").toLowerCase();
-      const note = String(item.note || "").toLowerCase();
-      return title.includes(adminSearchKeyword) || note.includes(adminSearchKeyword);
-    });
-  }, [adminNotes, adminSearchKeyword]);
-
-  const handleAddAdminNote = useCallback(() => {
-    setAdminNotes((prev) => [
-      ...prev.map((item) => ({ ...item, collapsed: true })),
-      createAdminNoteItem(`Parent ${prev.length + 1}`),
-    ]);
-  }, []);
-
-  const toggleAdminNoteCollapsed = useCallback((id) => {
-    setAdminNotes((prev) => prev.map((item) => (
-      item.id === id ? { ...item, collapsed: !item.collapsed } : item
-    )));
-  }, []);
-
-  const collapseAllAdminNotes = useCallback(() => {
-    setAdminNotes((prev) => prev.map((item) => ({ ...item, collapsed: true })));
-  }, []);
-
-  const handleAdminNoteChange = useCallback((id, value) => {
-    setAdminNotes((prev) => prev.map((item) => (
-      item.id === id ? { ...item, note: value, updatedAt: new Date().toISOString() } : item
-    )));
-  }, []);
-
-  const startAdminTitleEdit = useCallback((item) => {
-    setAdminEditingNoteId(item.id);
-    setAdminTitleDraft(item.title || "");
-  }, []);
-
-  const cancelAdminTitleEdit = useCallback(() => {
-    setAdminEditingNoteId(null);
-    setAdminTitleDraft("");
-  }, []);
-
-  const saveAdminTitle = useCallback((event, item) => {
-    event.preventDefault();
-    const cleanTitle = adminTitleDraft.trim() || item.title || "Admin Note";
-    setAdminNotes((prev) => prev.map((noteItem) => (
-      noteItem.id === item.id
-        ? { ...noteItem, title: cleanTitle, updatedAt: new Date().toISOString() }
-        : noteItem
-    )));
-    setAdminEditingNoteId(null);
-    setAdminTitleDraft("");
-  }, [adminTitleDraft]);
-
-  const deleteAdminNote = useCallback((id) => {
-    setAdminNotes((prev) => {
-      if (prev.length <= 1) {
-        return [{ ...prev[0], title: "Admin Note", note: "", collapsed: false, updatedAt: new Date().toISOString() }];
-      }
-      return prev.filter((item) => item.id !== id);
-    });
-  }, []);
-
-  const moveAdminNote = useCallback((id, direction) => {
-    setAdminNotes((prev) => {
-      const currentIndex = prev.findIndex((item) => item.id === id);
-      if (currentIndex < 0) return prev;
-      const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
-
-      const next = [...prev];
-      [next[currentIndex], next[nextIndex]] = [next[nextIndex], next[currentIndex]];
-      return next;
-    });
-  }, []);
-
   const handleSidebarShortcutClick = useCallback((event, key, to) => {
     event.preventDefault();
     setActiveTab(key);
@@ -17792,80 +17636,6 @@ export default function DepotStablingPage() {
     } catch {}
   }, [isSidebarCollapsed]);
 
-
-  useEffect(() => {
-    adminNotesCurrentRef.current = adminNotes;
-    saveAdminNotes(adminNotes);
-  }, [adminNotes]);
-
-  useEffect(() => {
-    if (!adminNotesLoadedRef.current) return undefined;
-
-    const entity = getAdminNoteEntity();
-    if (!isAdminNoteEntityReady(entity)) {
-      setAdminNotesDbReady(false);
-      return undefined;
-    }
-
-    const notesToSave = normalizeAdminNoteList(adminNotes);
-    const nextNotesJson = JSON.stringify(notesToSave);
-    if (nextNotesJson === adminNotesLastSavedJsonRef.current) return undefined;
-
-    if (adminNotesSaveTimerRef.current) {
-      window.clearTimeout(adminNotesSaveTimerRef.current);
-      adminNotesSaveTimerRef.current = null;
-    }
-
-    setAdminNotesSaving(true);
-    setAdminNotesLiveStatus("Saving live...");
-
-    const timer = window.setTimeout(async () => {
-      try {
-        const payload = {
-          recordKey: ADMIN_NOTE_LIVE_RECORD_KEY,
-          notes: notesToSave,
-          updatedAt: new Date().toISOString(),
-        };
-
-        let savedRecord = null;
-        const existingId = adminNotesLiveIdRef.current;
-
-        if (existingId) {
-          try {
-            savedRecord = await entity.update(existingId, payload);
-          } catch (error) {
-            if (error?.status !== 404) throw error;
-            savedRecord = await entity.create(payload);
-          }
-        } else {
-          savedRecord = await entity.create(payload);
-        }
-
-        if (savedRecord?.id) adminNotesLiveIdRef.current = savedRecord.id;
-        adminNotesLastSavedJsonRef.current = nextNotesJson;
-        setAdminNotesDbReady(true);
-        setAdminNotesLiveStatus("Live saved");
-      } catch (error) {
-        console.error("Admin notes live save failed:", error);
-        setAdminNotesDbReady(false);
-        setAdminNotesLiveStatus("D1 save failed - local saved");
-      } finally {
-        setAdminNotesSaving(false);
-        if (adminNotesSaveTimerRef.current === timer) {
-          adminNotesSaveTimerRef.current = null;
-        }
-      }
-    }, ADMIN_NOTE_SAVE_DEBOUNCE_MS);
-
-    adminNotesSaveTimerRef.current = timer;
-
-    return () => {
-      window.clearTimeout(timer);
-      if (adminNotesSaveTimerRef.current === timer) {
-        adminNotesSaveTimerRef.current = null;
-      }
-    };
-  }, [adminNotes]);
 
   useEffect(() => {
     if (isSidebarCollapsed) return undefined;
@@ -21557,6 +21327,17 @@ export default function DepotStablingPage() {
               ),
             },
             {
+              key: "washing",
+              label: "Train Washing",
+              code: "WSH",
+              to: "/train-washing",
+              icon: (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+              ),
+            },
+            {
               key: "possession",
               label: "Possession Log",
               code: "PSS",
@@ -21589,19 +21370,6 @@ export default function DepotStablingPage() {
                 </svg>
               ),
             },
-            {
-              key: "admin",
-              label: "Admin",
-              code: "ADM",
-              to: "/admin",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4z"/>
-                  <path d="M9 12l2 2 4-4"/>
-                </svg>
-              ),
-            },
-            { key: "about", label: "About", code: "ABT", to: "/about" },
           ]
             .map(({ key, label, code, to }) => {
             const isActive = activeTab === key;
@@ -21843,6 +21611,15 @@ export default function DepotStablingPage() {
           />
         )}
 
+        {activeTab === "washing" && (
+          <div className="theme-washing-workspace grid w-full items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.85fr)]">
+            <TrainWashing />
+            <div className="min-w-0">
+              <TrainWashingDocxExport />
+            </div>
+          </div>
+        )}
+
         {activeTab === "odo" && (
           <div className="w-full px-2 pb-10 pt-6">
               <div className="mb-3 w-full max-w-[968px] rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
@@ -21915,184 +21692,6 @@ export default function DepotStablingPage() {
         {activeTab === "sleep" && (
           <div className="w-full px-2 pb-10 pt-3">
             <SleepModeWorkspace westData={westData} eastData={eastData} />
-          </div>
-        )}
-
-        {activeTab === "about" && (
-          <div className="w-full px-2 pb-10 pt-3">
-            <AboutWorkspace />
-          </div>
-        )}
-
-        {activeTab === "admin" && (
-          <div className="w-full px-2 pb-10 pt-6">
-            <div className="mx-auto w-full max-w-[620px]">
-              <div className="space-y-2.5">
-                  <div className="rounded-[24px] border border-[#1d4869] bg-[#061827]/90 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#4f8ef7]/35 bg-[#0f2d4a] text-[10px] font-semibold tracking-[0.16em] text-[#bceaff]">
-                        ADM
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-normal uppercase tracking-[0.22em] text-[#6db6e8]">Admin notes</p>
-                        <h2 className="truncate text-[17px] font-normal leading-tight text-white">Modern Note</h2>
-                        <p className={`mt-0.5 flex items-center gap-1 text-[10px] font-semibold ${adminNotesDbReady ? "text-emerald-300" : "text-amber-300"}`}>
-                          {(adminNotesLoading || adminNotesSaving) && <Loader2 className="h-3 w-3 animate-spin" />}
-                          {adminNotesLoading ? "Loading live notes..." : adminNotesSaving ? "Saving live..." : adminNotesLiveStatus}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={collapseAllAdminNotes}
-                        className="shrink-0 rounded-2xl border border-[#2b4f6b] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8bd5ff] transition hover:border-[#4f8ef7] hover:bg-[#0f2d4a] hover:text-white active:scale-[0.98]"
-                        title="Collapse all expanded parents"
-                      >
-                        Collapse All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddAdminNote}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-[#dbeafe] text-[#0f2d4a] shadow-sm transition active:scale-95"
-                        title="Add parent"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      value={adminSearch}
-                      onChange={(event) => setAdminSearch(event.target.value)}
-                      placeholder="Search admin note"
-                      className="h-11 w-full rounded-2xl border border-[#d7e3ee] bg-[#f8fbff] pl-11 pr-4 text-[13px] font-normal text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#93c5fd] focus:ring-2 focus:ring-[#93c5fd]/30"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    {visibleAdminNotes.map((item, visibleIndex) => {
-                      const itemIndex = adminNotes.findIndex((noteItem) => noteItem.id === item.id);
-                      const isEditingTitle = adminEditingNoteId === item.id;
-                      const isExpanded = adminSearchKeyword ? true : !item.collapsed;
-                      const noteChars = String(item.note || "").trim().length;
-
-                      return (
-                        <section
-                          key={item.id}
-                          className="rounded-2xl border px-2.5 py-1.5 shadow-sm"
-                          style={getAdminNoteCardStyle(visibleIndex)}
-                        >
-                          {isEditingTitle ? (
-                            <form onSubmit={(event) => saveAdminTitle(event, item)} className="flex items-center gap-1.5">
-                              <input
-                                autoFocus
-                                value={adminTitleDraft}
-                                onChange={(event) => setAdminTitleDraft(event.target.value)}
-                                placeholder="Parent name"
-                                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[15px] font-normal text-slate-800 outline-none transition focus:bg-white focus:ring-2 focus:ring-indigo-200"
-                              />
-                              <button
-                                type="submit"
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm transition-transform active:scale-95"
-                                title="Save name"
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={cancelAdminTitleEdit}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-transform active:scale-95"
-                                title="Cancel"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </form>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => toggleAdminNoteCollapsed(item.id)}
-                                className="flex min-w-0 flex-1 items-center gap-1.5 rounded-2xl text-left transition active:scale-[0.99]"
-                                aria-expanded={isExpanded}
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/65 text-slate-600 ring-1 ring-white/70">
-                                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-[17px] font-normal leading-tight tracking-tight text-slate-800">{item.title}</span>
-                                  <span className="mt-px block text-[10px] font-semibold leading-tight text-slate-500">
-                                    {noteChars ? `${noteChars} chars saved` : "empty note"}
-                                  </span>
-                                </span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => moveAdminNote(item.id, "up")}
-                                disabled={itemIndex <= 0}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 disabled:opacity-25"
-                                title="Move up"
-                              >
-                                <ArrowUp className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveAdminNote(item.id, "down")}
-                                disabled={itemIndex < 0 || itemIndex === adminNotes.length - 1}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 disabled:opacity-25"
-                                title="Move down"
-                              >
-                                <ArrowDown className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => startAdminTitleEdit(item)}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
-                                title="Edit parent name"
-                              >
-                                <Pencil className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteAdminNote(item.id)}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-rose-500 transition-colors hover:bg-white/60 hover:text-rose-600"
-                                title="Delete parent"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          )}
-
-                          {isExpanded && !isEditingTitle && (
-                            <div className="mt-1.5 rounded-2xl border border-white/65 bg-white/80 p-2 shadow-inner shadow-white/40">
-                              <AdminAutoResizeTextarea
-                                value={item.note || ""}
-                                onChange={(value) => handleAdminNoteChange(item.id, value)}
-                                placeholder="Write note here..."
-                              />
-                              <div className="mt-1 flex items-center justify-between px-1 text-[10px] font-semibold text-slate-500">
-                                <span>{adminNotesDbReady ? "Live saved after refresh" : adminNotesLiveStatus}</span>
-                                <span>{item.title}</span>
-                              </div>
-                            </div>
-                          )}
-                        </section>
-                      );
-                    })}
-
-                    {adminSearchKeyword && visibleAdminNotes.length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center shadow-sm">
-                        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500">
-                          <Search className="h-4 w-4" />
-                        </div>
-                        <h3 className="mt-2 text-sm font-normal text-slate-800">No admin note found</h3>
-                        <p className="mt-1 text-xs text-slate-400">Try another parent name or note keyword.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-            </div>
           </div>
         )}
 

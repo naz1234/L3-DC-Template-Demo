@@ -2,7 +2,7 @@
 
 The main application and its operational APIs are available without signing in. Opening the site loads the depot page and initializes the D1 schema directly. There is no email allowlist, PIN request, Turnstile check, session expiry, online-staff identity display, or sign-out action in the app.
 
-ODO Reading, Admin, and About appear directly in the navigation and open without a password. Alarm (ALM), Overtime (OVT), Checklist (CHK), Roster (ROS), and Train Washing (WSH) have been removed from navigation and routing, including their short route aliases. Old bookmarks for these pages show Page Not Found. The Protected pages menu, shared admin credentials, and per-tab unlock state have been removed. Admin notes load when the Admin page is first opened.
+Train Washing (WSH) and ODO Reading appear directly in the navigation and open without a password. Alarm (ALM), Overtime (OVT), Checklist (CHK), Roster (ROS), Admin (ADM), and About (ABT) have been removed from navigation and routing, including their short route aliases. Old bookmarks for the removed pages show Page Not Found. The Protected pages menu, shared admin credentials, and per-tab unlock state have been removed.
 
 The middleware retains the same-origin check on POST, PUT, PATCH, and DELETE requests.
 

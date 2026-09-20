@@ -20,14 +20,11 @@ const AppRoutes = () => {
       <Route path="/train-movement" element={<DepotStabling />} />
       <Route path="/pst-train-prep" element={<DepotStabling />} />
       <Route path="/insertion" element={<DepotStabling />} />
+      <Route path="/train-washing" element={<DepotStabling />} />
       <Route path="/odo-reading" element={<DepotStabling />} />
       <Route path="/possession" element={<DepotStabling />} />
       <Route path="/sleep" element={<DepotStabling />} />
       <Route path="/slp" element={<DepotStabling />} />
-      <Route path="/admin" element={<DepotStabling />} />
-      <Route path="/adm" element={<DepotStabling />} />
-      <Route path="/about" element={<DepotStabling />} />
-      <Route path="/abt" element={<DepotStabling />} />
       {/* Add your page Route elements here */}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
